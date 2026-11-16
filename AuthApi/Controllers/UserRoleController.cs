@@ -4,6 +4,7 @@ using AuthApi.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ZstdSharp.Unsafe;
 
 namespace AuthApi.Controllers
 {
@@ -14,10 +15,13 @@ namespace AuthApi.Controllers
         private readonly AuthuserContext _context;
         private readonly PasswordHasher _passwordHasher;
 
-        public UserRoleController(AuthuserContext context, PasswordHasher passwordHasher)
+        private readonly GenerateToken _generateToken;
+
+        public UserRoleController(AuthuserContext context, PasswordHasher passwordHasher, GenerateToken generateToken)
         {
             _context = context;
             _passwordHasher = passwordHasher;
+            _generateToken = generateToken;
         }
 
         [HttpPost("assignRole")]
@@ -91,19 +95,27 @@ namespace AuthApi.Controllers
             try
             {
 
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginUserDto.Email);
+                var user = await _context.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == loginUserDto.Email);
 
                 if (user is null)
                 {
                     return StatusCode(404, new { message = "Nincs ilyen registrált tag" });
                 }
 
-                var isValid = 
+                var isValid = _passwordHasher.Verify(loginUserDto.Password!, user.Password!, user.Salt!);
+
+                if (isValid)
+                {
+                    var newtoken = _generateToken.Token(user.Id!, user.Email!, user.Roles!);
+                    return StatusCode(200, new { message = "sikeres belépés", token = newtoken });
+                }
+
+                return (StatusCode(418));
             }
-            catch (Exception)
+            catch (Exception e) 
             {
 
-                throw;
+                return StatusCode(400, new { message = e.Message });
             }
         }
     }
