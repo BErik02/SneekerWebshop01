@@ -62,7 +62,7 @@ namespace AuthApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserDto loginUserDto)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Name == loginUserDto.Name);
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Name == loginUserDto.Email);
 
 
             if (user is null)

@@ -1,5 +1,6 @@
 ﻿using AuthApi.Models;
 using AuthApi.Models.DTOs;
+using AuthApi.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,10 +12,12 @@ namespace AuthApi.Controllers
     public class UserRoleController : ControllerBase
     {
         private readonly AuthuserContext _context;
+        private readonly PasswordHasher _passwordHasher;
 
-        public UserRoleController(AuthuserContext context)
+        public UserRoleController(AuthuserContext context, PasswordHasher passwordHasher)
         {
             _context = context;
+            _passwordHasher = passwordHasher;
         }
 
         [HttpPost("assignRole")]
@@ -80,6 +83,28 @@ namespace AuthApi.Controllers
                 .SingleOrDefaultAsync(u => u.Id == id);
 
             return Ok(user);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginUserDto loginUserDto)
+        {
+            try
+            {
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginUserDto.Email);
+
+                if (user is null)
+                {
+                    return StatusCode(404, new { message = "Nincs ilyen registrált tag" });
+                }
+
+                var isValid = 
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
         }
     }
 }
