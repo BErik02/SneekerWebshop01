@@ -80,11 +80,6 @@ namespace AuthApi.Controllers
                 .SingleOrDefaultAsync(u => u.Id == id);
 
             return Ok(user);
-               
-
-
-
-
         }
     }
 }
